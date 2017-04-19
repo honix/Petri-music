@@ -1,3 +1,4 @@
+made with [p5.js](https://p5js.org)
 # Petri-music
 
 Dive in to - https://honix.github.io/Petri-music/index.html
