@@ -36,7 +36,7 @@ function newNode(x, y, value) {
 }
 
 function newGate(x, y, ins, outs, offset) {
-  return {x: x, y: y, offset: offset || 30,
+  return {x: x, y: y, offset: offset || 30, triggered: false,
           ins: ins || [], outs: outs || []}
 }
 
@@ -86,6 +86,9 @@ function setup() {
   strokeWeight(strokeW)
   fill(bg)
 
+  time = performance.now()
+  prevTime = time
+  delta = 0.0
   frame = 0
   wire = false
   nodes = []
@@ -126,6 +129,10 @@ function playButtonPress() {
   if (playButton.play) {
     playButton.play = false
     playButton.elt.innerText = '▶'
+    for(var n in nodes){
+      nodes[n].value = min(max(nodes[n].value + nodes[n].tempValue, 0), 12)
+      nodes[n].tempValue = 0
+    }
   } else {
     playButton.play = true
     playButton.elt.innerText = '⏸'
@@ -346,11 +353,17 @@ function drawWaves() {
 function draw() {
 
   // update
-  if (playButton.play)
-    frame += 1
+  if (playButton.play) {
+    prevTime = time
+    time = performance.now()
+    delta = time - prevTime
+    prevFrame = frame
+    frame += delta/16
+  }
 
   for(var g in gates){
-    if (frame % 60 == 0 + gates[g].offset) {
+    if (!gates[g].triggered && (frame % 60 >= gates[g].offset)) {
+      gates[g].triggered = true
       var i = gates[g].ins
       if (i.length && i.every(x => x.value)){
         i.forEach(x => x.tempValue--)
@@ -362,7 +375,10 @@ function draw() {
     }
   }
 
-  if (frame % 60 == 0) {
+  if (frame % 60 < prevFrame % 60) {
+    for(var g in gates){
+      gates[g].triggered = false
+    }
     for(var n in nodes){
       nodes[n].value = min(max(nodes[n].value + nodes[n].tempValue, 0), 12)
       nodes[n].tempValue = 0
